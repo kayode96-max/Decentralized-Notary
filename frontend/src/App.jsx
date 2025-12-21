@@ -6,9 +6,9 @@ import VerifyPage from './components/VerifyPage'
 export default function App() {
   return (
     <div className="app">
-      <header
-        <h1>Decentralized Dta otay</h1>
-        <p>Hash a file locall adi (Bitcoin L2).</p>
+      <header>
+        <h1>Decentralized Digital Notary</h1>
+        <p>Hash a file locally and notarize on Stacks (Bitcoin L2).</p>
       </header>
 
       <main>
