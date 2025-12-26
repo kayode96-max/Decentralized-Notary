@@ -1,24 +1,29 @@
-;; Notary contract
-;; Stores mapping: hash (buff 32) -> owner principal
-;; Only stores the owner (tx-sender) who called `notarize`.
-;; Timestamping / exact block/time can be derived from the transaction that called `notarize` via the Stacks API.
+;; Notary Contract
+;; Stores a mapping of document hash -> { owner, block-height }
 
-(define-map notarizations ((hash (buff 32))) ((owner principal)))
+(define-map notarizations 
+  { hash: (buff 32) } 
+  { owner: principal, block: uint }
+)
 
 (define-public (notarize (h (buff 32)))
-  (begin
-    ;; If the hash already exists, we still allow reinsertion but only if owner is same caller.
-    (let ((existing (map-get? notarizations {hash: h})))
-      (match existing
-        some ((tuple (owner owner-principal)))
-        (if (is-eq owner-principal tx-sender)
-            (begin (ok true))
-            (err u100)) ;; conflict: already notarized by another principal
-        (begin
-          (map-insert notarizations {hash: h} {owner: tx-sender})
-          (ok true)))))
+  (let ((existing (map-get? notarizations {hash: h})))
+    (match existing
+      entry 
+        (if (is-eq (get owner entry) tx-sender)
+            (ok true) ;; Already notarized by sender, success
+            (err u100)) ;; Already notarized by someone else
+      (begin
+        (map-insert notarizations 
+          { hash: h } 
+          { owner: tx-sender, block: block-height }
+        )
+        (print { event: "notarize", hash: h, owner: tx-sender, block: block-height })
+        (ok true))
+    )
+  )
 )
 
 (define-read-only (get-notarization (h (buff 32)))
-  (map-get? notarizations {hash: h})
+  (map-get? notarizations { hash: h })
 )
